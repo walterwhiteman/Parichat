@@ -1,77 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Parichat - Video Call</title>
   <link href="https://unpkg.com/@figma-plugin/icon/v1.1.0/index.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
   <style>
     body {
       margin: 0;
-      background: black;
-      font-family: sans-serif;
+      background-color: black;
       overflow: hidden;
     }
-    #remoteVideo {
-      position: absolute;
-      top: 0;
-      left: 0;
+    video {
       width: 100vw;
       height: 100vh;
       object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
-    #localVideo {
+    .pip {
+      width: 160px;
+      height: 100px;
       position: absolute;
       bottom: 1rem;
       right: 1rem;
-      width: 150px;
-      height: 100px;
       border: 2px solid white;
-      border-radius: 10px;
+      border-radius: 8px;
       object-fit: cover;
-      cursor: move;
+      z-index: 10;
       background: black;
     }
-    .controls {
+    .call-controls {
       position: absolute;
-      bottom: 1rem;
+      bottom: 2rem;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 1rem;
+      z-index: 20;
     }
-    .controls button {
-      background: white;
-      border: none;
-      border-radius: 50%;
+    .call-controls button {
       width: 50px;
       height: 50px;
-      font-size: 1.2rem;
-      cursor: pointer;
+      border: none;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .controls .end {
-      background: red;
+      font-size: 1.4rem;
       color: white;
-    }
-    .controls .mute, .controls .camera {
       background: #007bff;
-      color: white;
+      cursor: pointer;
+    }
+    .call-controls button.end {
+      background: red;
     }
   </style>
 </head>
 <body>
   <video id="remoteVideo" autoplay playsinline></video>
-  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="localVideo" class="pip" autoplay muted playsinline></video>
 
-  <div class="controls">
-    <button class="camera" id="toggleVideo"><i class="figicon figicon-camera"></i></button>
-    <button class="mute" id="toggleAudio"><i class="figicon figicon-mic"></i></button>
-    <button class="end" id="endCall"><i class="figicon figicon-phone-off"></i></button>
+  <div class="call-controls">
+    <button id="toggleVideo"><i class="figicon figicon-video"></i></button>
+    <button id="toggleAudio"><i class="figicon figicon-mic"></i></button>
+    <button class="end" id="endCall"><i class="figicon figicon-phone-x"></i></button>
   </div>
 
-  <script type="module" src="VideoCall.js"></script>
+  <script type="module" src="./videocall.js"></script>
 </body>
 </html>
