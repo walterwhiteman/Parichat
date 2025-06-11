@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parichat - Chatroom</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://unpkg.com/@figma-plugin/icon/v1.1.0/index.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="chat-header">
+    <h2>Parichat</h2>
+    <div class="header-icons">
+      <button id="startCallBtn" title="Start Video Call">
+        <i class="figicon figicon-video"></i>
+      </button>
+      <button id="uploadBtn" title="Send Image">
+        <i class="figicon figicon-image"></i>
+      </button>
+      <button id="leaveRoomBtn" title="Leave Room">
+        <i class="figicon figicon-logout"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="chatBox" class="chat-box"></div>
+
+  <div class="chat-input-area">
+    <input type="text" id="msgInput" placeholder="Type your message..." />
+    <button id="sendBtn">
+      <i class="figicon figicon-send"></i>
+    </button>
+  </div>
+
+  <script type="module" src="./chatroom.js"></script>
+</body>
+</html>
