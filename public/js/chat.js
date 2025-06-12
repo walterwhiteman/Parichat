@@ -2,7 +2,8 @@
 
 // Import Firebase services and necessary functions
 import { auth, db, storage } from './firebase-init.js';
-import { ref, push, set, onValue, off, serverTimestamp, get, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+// ADDED onDisconnect to the import list below
+import { ref, push, set, onValue, off, serverTimestamp, get, remove, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { uploadBytesResumable, getDownloadURL, ref as storageRef } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
 // Get DOM elements
@@ -158,7 +159,7 @@ onValue(usersRef, (snapshot) => {
         // For reload case, onDisconnect takes care of it, but for explicit leave, we handle it.
         previousUsernames.forEach(pUserName => {
             if (!currentUsernames.has(pUserName) && pUserName !== userName) { // Don't show "you left"
-                // Only show if the user isn't the current user who just joined/reloaded
+                // Only show if the user isn't the current user who just rejoined
                 if (!currentUsers.some(u => u.userName === pUserName && u.userId === userId)) {
                      // Check if this is not the current user who just rejoined
                     displaySystemMessage(`${pUserName} Left`);
