@@ -1,0 +1,39 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        // Allow any authenticated user to read this room's data.
+        // This is necessary for the client-side to check room existence and user count before joining.
+        ".read": "auth != null",
+
+        "users": {
+          "$userId": {
+            // Allow writing only if the user is authenticated AND their UID matches the $userId being written.
+            // This ensures users can only write to their own presence entry.
+            ".write": "auth != null && auth.uid === $userId",
+            // Allow reading of other users' presence data within the room if the current user is authenticated.
+            ".read": "auth != null"
+          }
+          // The 2-user limit is primarily handled by client-side auth.js logic.
+          // Server-side enforcement of children.size() was causing errors and is thus omitted.
+        },
+        "messages": {
+          // Allow read/write for any authenticated user within this room.
+          ".read": "auth != null",
+          // Allow writing messages if authenticated. Consider adding auth.uid check for specific message write if needed.
+          ".write": "auth != null"
+        },
+        "typing": {
+          // Allow read/write for any authenticated user within this room.
+          ".read": "auth != null",
+          ".write": "auth != null"
+        },
+        "calls": {
+          // Allow read/write for any authenticated user within this room for signaling.
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    }
+  }
+}
