@@ -25,16 +25,22 @@ const userId = sessionStorage.getItem('parichat_userId');
 // --- WebRTC / PeerJS variables ---
 let peer = null;
 let localStream = null;
-let currentCall = null;
+let currentCall = null; // Stores the active PeerJS call object
 let isMicMuted = false;
 let isCamOff = false;
 let callTimerInterval = null;
 let callStartTime = 0;
+let callTimeoutTimer = null; // Timer for outgoing call unanswered
+let peerCallStateListener = null; // To store listener for remote call state
 
 // Firebase Realtime Database references for signaling
-const callRef = ref(db, `rooms/${roomCode}/calls`); // Parent node for all calls in this room
-const myCallSignalRef = ref(db, `rooms/${roomCode}/calls/${userId}`); // My outgoing/incoming call signal
-const peerCallSignalRef = (peerId) => ref(db, `rooms/${roomCode}/calls/${peerId}`); // Other user's call signal
+const usersInRoomRef = ref(db, `rooms/${roomCode}/users`); // All users in the room
+const myUserRef = child(usersInRoomRef, userId); // My user node
+const myPeerIdRef = child(myUserRef, 'peerId'); // My PeerJS ID
+const myCallStateRef = child(myUserRef, 'callState'); // My current call state
+const remoteUserRef = (remoteUserId) => child(usersInRoomRef, remoteUserId); // Other user's node
+const remotePeerIdRef = (remoteUserId) => child(remoteUserRef(remoteUserId), 'peerId'); // Other user's PeerJS ID
+const remoteCallStateRef = (remoteUserId) => child(remoteUserRef(remoteUserId), 'callState'); // Other user's call state
 
 // --- Utility Functions ---
 
@@ -154,281 +160,44 @@ async function getLocalStream() {
             // else, it's an AbortError, which is often benign and can be ignored.
         }
         makeDraggable(localVideo); // Make PIP draggable
+        return localStream;
     } catch (err) {
         console.error("Error accessing media devices:", err);
         showAppMessage("Media Access Denied", "Please allow camera and microphone access to make video calls.", true);
         localStream = null;
+        return null;
     }
 }
 
 // Initialize PeerJS
 async function initializePeer() {
     if (!peer) {
+        // Configure PeerJS with STUN/TURN servers for better NAT traversal
         peer = new Peer(userId, {
             host: '0.peerjs.com', // PeerJS Cloud host
             port: 443,
             secure: true,
-            path: '/'
+            path: '/',
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    // You can add more STUN servers or a TURN server here if needed.
+                    // TURN servers require credentials and are often paid or self-hosted.
+                    // Example TURN server (replace with your own if you have one):
+                    // { urls: 'turn:your_turn_server.com:3478', username: 'your_username', credential: 'your_password' }
+                ]
+            }
         });
 
-        peer.on('open', (id) => {
+        peer.on('open', async (id) => {
             console.log('My PeerJS ID:', id);
-            // Ensure my PeerJS ID is published or known to others
-            set(ref(db, `rooms/${roomCode}/users/${userId}/peerId`), id); // Set first
-            onDisconnect(ref(db, `rooms/${roomCode}/users/${userId}/peerId`)).remove(); // Then set onDisconnect
-        });
+            // Ensure my PeerJS ID is published and set onDisconnect
+            await set(myPeerIdRef, id); // Set first
+            onDisconnect(myPeerIdRef).remove(); // Then set onDisconnect
+            onDisconnect(myCallStateRef).set(null); // Also set my callState to null on disconnect
 
-        peer.on('call', (call) => {
-            console.log('Incoming call from:', call.peer);
-            // Ensure we don't accept multiple calls or from unintended users
-            if (currentCall && currentCall.open) {
-                console.warn('Already in a call, rejecting new incoming call.');
-                call.close();
-                return;
-            }
-
-            // Check if the caller is the other user in the 2-person room
-            get(ref(db, `rooms/${roomCode}/users`)).then(snapshot => {
-                const users = snapshot.val();
-                const otherUser = Object.values(users).find(u => u.peerId === call.peer && u.userId !== userId);
-                if (otherUser) {
-                    incomingCallModal.classList.add('active');
-                    currentCall = call; // Store the call object temporarily
-                } else {
-                    console.warn('Call from unknown peer or more than 2 users, rejecting.');
-                    call.close();
-                }
-            });
-        });
-
-        peer.on('error', (err) => {
-            console.error('PeerJS error:', err);
-            showAppMessage("PeerJS Error", `A WebRTC error occurred: ${err.message}`, true);
-            endCall(); // Attempt to end any active call on error
-        });
-    }
-}
-
-// Answer incoming call
-acceptCallBtn.addEventListener('click', async () => {
-    if (!currentCall) return;
-
-    if (!localStream) {
-        await getLocalStream();
-        if (!localStream) {
-            showAppMessage("Media Error", "Cannot accept call: Camera/Mic access denied.", true);
-            return;
-        }
-    }
-    
-    incomingCallModal.classList.remove('active');
-    activeCallView.classList.add('active');
-    startCallTimer();
-
-    currentCall.answer(localStream); // Answer the call with local stream
-    currentCall.on('stream', async (remoteStream) => {
-        remoteVideo.srcObject = remoteStream;
-        // Explicitly try to play, catching AbortError if it happens
-        try {
-            await remoteVideo.play();
-        } catch (e) {
-            if (e.name !== 'AbortError') {
-                console.error("Error playing remote video:", e);
-            }
-            // else, it's an AbortError, which is often benign and can be ignored.
-        }
-    });
-    currentCall.on('close', () => {
-        console.log('Call ended by peer.');
-        endCall();
-    });
-    currentCall.on('error', (err) => {
-        console.error('Call error:', err);
-        showAppMessage("Call Error", `Call disconnected: ${err.message}`, true);
-        endCall();
-    });
-
-    // Notify other user that call is accepted (via Firebase signaling)
-    const otherPeerId = currentCall.peer;
-    set(peerCallSignalRef(otherPeerId), { status: 'accepted', by: userId });
-});
-
-// Reject incoming call
-rejectCallBtn.addEventListener('click', () => {
-    if (currentCall) {
-        currentCall.close();
-        currentCall = null;
-    }
-    incomingCallModal.classList.remove('active');
-    // Notify caller that call is rejected
-    set(myCallSignalRef, { status: 'rejected', by: userId });
-});
-
-// Initiate Outgoing Call
-videoCallBtn.addEventListener('click', async () => {
-    if (currentCall && currentCall.open) {
-        showAppMessage("Active Call", "You are already in a call.", false);
-        return;
-    }
-    if (!localStream) {
-        await getLocalStream();
-        if (!localStream) return; // If stream not obtained, don't proceed
-    }
-
-    // Find the other user's PeerID in the room
-    const snapshot = await get(ref(db, `rooms/${roomCode}/users`));
-    const users = snapshot.val();
-    let otherPeerId = null;
-    let otherUserId = null;
-
-    if (users) {
-        // Find the peerId of the other user in a 2-person room
-        for (const id in users) {
-            if (id !== userId && users[id].peerId) {
-                otherPeerId = users[id].peerId;
-                otherUserId = id;
-                break;
-            }
-        }
-    }
-
-    if (!otherPeerId) {
-        showAppMessage("No Partner", "No other user found in this room to call.", true);
-        return;
-    }
-
-    // Indicate that we are calling
-    showAppMessage("Calling...", `Calling ${users[otherUserId].userName}...`);
-    set(myCallSignalRef, { status: 'calling', to: otherUserId, from: userId, callerPeerId: peer.id });
-
-    // Make the PeerJS call
-    const call = peer.call(otherPeerId, localStream);
-    currentCall = call;
-
-    call.on('stream', async (remoteStream) => {
-        remoteVideo.srcObject = remoteStream;
-        // Explicitly try to play, catching AbortError if it happens
-        try {
-            await remoteVideo.play();
-        } catch (e) {
-            if (e.name !== 'AbortError') {
-                console.error("Error playing remote video:", e);
-            }
-            // else, it's an AbortError, which is often benign and can be ignored.
-        }
-        activeCallView.classList.add('active'); // Show active call view
-        startCallTimer();
-        document.querySelector('.app-modal')?.remove(); // Close "Calling..." modal
-    });
-    call.on('close', () => {
-        console.log('Call ended.');
-        endCall();
-    });
-    call.on('error', (err) => {
-        console.error('Call error:', err);
-        showAppMessage("Call Error", `Call disconnected: ${err.message}`, true);
-        endCall();
-    });
-
-    // Listen for peer's response to our call signal
-    onValue(peerCallSignalRef(otherUserId), (snapshot) => {
-        const signal = snapshot.val();
-        if (signal && signal.status === 'accepted' && signal.by === otherUserId && currentCall && currentCall.peer === otherPeerId) {
-            console.log('Call accepted by peer.');
-            document.querySelector('.app-modal')?.remove(); // Close "Calling..." modal
-        } else if (signal && signal.status === 'rejected' && signal.by === otherUserId && currentCall && currentCall.peer === otherPeerId) {
-            console.log('Call rejected by peer.');
-            showAppMessage("Call Rejected", `${users[otherUserId].userName} rejected your call.`, true);
-            endCall();
-        } else if (signal === null && currentCall && currentCall.peer === otherPeerId) {
-            // Other user's call signal was removed, likely they left or disconnected
-            console.log('Other user disconnected during call setup.');
-            showAppMessage("User Disconnected", `${users[otherUserId].userName} disconnected.`, true);
-            endCall();
-        }
-    });
-});
-
-// Toggle Microphone
-toggleMicBtn.addEventListener('click', () => {
-    if (localStream) {
-        localStream.getAudioTracks().forEach(track => {
-            track.enabled = !track.enabled;
-            isMicMuted = !track.enabled;
-            toggleMicBtn.querySelector('.material-symbols-outlined').textContent = isMicMuted ? 'mic_off' : 'mic';
-            console.log('Mic ' + (isMicMuted ? 'muted' : 'unmuted'));
-        });
-    }
-});
-
-// Toggle Camera
-toggleCamBtn.addEventListener('click', () => {
-    if (localStream) {
-        localStream.getVideoTracks().forEach(track => {
-            track.enabled = !track.enabled;
-            isCamOff = !track.enabled;
-            toggleCamBtn.querySelector('.material-symbols-outlined').textContent = isCamOff ? 'videocam_off' : 'videocam';
-            console.log('Cam ' + (isCamOff ? 'off' : 'on'));
-        });
-    }
-});
-
-// End Call
-endCallBtn.addEventListener('click', () => {
-    endCall();
-});
-
-function endCall() {
-    if (currentCall) {
-        currentCall.close(); // Close the PeerJS call
-        currentCall = null;
-    }
-    if (localStream) {
-        localStream.getTracks().forEach(track => track.stop()); // Stop local media tracks
-        localStream = null;
-    }
-    localVideo.srcObject = null;
-    remoteVideo.srcObject = null;
-    activeCallView.classList.remove('active');
-    incomingCallModal.classList.remove('active');
-    stopCallTimer();
-    isMicMuted = false;
-    isCamOff = false;
-    toggleMicBtn.querySelector('.material-symbols-outlined').textContent = 'mic';
-    toggleCamBtn.querySelector('.material-symbols-outlined').textContent = 'videocam';
-
-    // Clear call signal from Firebase
-    remove(myCallSignalRef).catch(e => console.error("Error clearing my call signal:", e));
-}
-
-
-// --- Initial Setup / Listeners ---
-
-// Listen for incoming call signals (general listener for this user's node)
-onValue(myCallSignalRef, async (snapshot) => {
-    const callSignal = snapshot.val();
-    if (callSignal && callSignal.status === 'calling' && callSignal.to === userId && !currentCall) {
-        // This means someone is calling me
-        // Get media stream before showing modal to speed up acceptance
-        if (!localStream) {
-            await getLocalStream();
-            if (!localStream) { // If stream access failed, auto-reject
-                remove(myCallSignalRef); // Clear incoming signal
-                return;
-            }
-        }
-        incomingCallModal.classList.add('active');
-    } else if (callSignal === null && currentCall) {
-        // My call signal was removed by other peer (e.g., they ended it)
-        console.log('My call signal removed from Firebase, likely peer ended.');
-        endCall();
-    }
-});
-
-// Initialize PeerJS when the page loads, but only if user info is available
-if (roomCode && userName && userId) {
-    initializePeer();
-    // Pre-fetch local stream when chat page loads (optional, but speeds up call start)
-    // You might want to defer this until the user clicks the video call button if privacy is a top concern on load.
-    // getLocalStream(); // Commenting out for now, to ensure mic/cam prompt is only on button click.
-}
+            // Listen for incoming call signals on my own callState node
+            onValue(myCallStateRef, async (snapshot) => {
+                const callState = snapshot.val();
+                if (callState && callState.status === 'incoming' && callState.from && callState.callerPeerId && !currentCall && !incomingCallModal.classLi
