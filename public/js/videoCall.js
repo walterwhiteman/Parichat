@@ -1,8 +1,9 @@
 // public/js/videoCall.js
 
-// Import Firebase services
+// Import Firebase services and necessary functions
+// ADDED onDisconnect to the import list below
 import { db } from './firebase-init.js';
-import { ref, set, onValue, off, remove, get, child } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { ref, set, onValue, off, remove, get, child, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
 // Get DOM elements for video call UI
 const videoCallBtn = document.getElementById('videoCallBtn');
@@ -156,8 +157,9 @@ async function getLocalStream() {
 // Initialize PeerJS
 async function initializePeer() {
     if (!peer) {
+        // UPDATED: Using PeerJS Cloud host
         peer = new Peer(userId, {
-            host: '0.peerjs.com', // <--- This MUST be '0.peerjs.com'
+            host: '0.peerjs.com', // PeerJS Cloud host
             port: 443,
             secure: true,
             path: '/'
@@ -166,8 +168,8 @@ async function initializePeer() {
         peer.on('open', (id) => {
             console.log('My PeerJS ID:', id);
             // Ensure my PeerJS ID is published or known to others
-            set(ref(db, `rooms/${roomCode}/users/${userId}/peerId`), id);
-            onDisconnect(ref(db, `rooms/${roomCode}/users/${userId}/peerId`)).remove();
+            onDisconnect(ref(db, `rooms/${roomCode}/users/${userId}/peerId`)).remove(); // Using onDisconnect here
+            set(ref(db, `rooms/${roomCode}/users/${userId}/peerId`), id); // Set after onDisconnect
         });
 
         peer.on('call', (call) => {
@@ -408,5 +410,3 @@ if (roomCode && userName && userId) {
     // You might want to defer this until the user clicks the video call button if privacy is a top concern on load.
     // getLocalStream(); // Commenting out for now, to ensure mic/cam prompt is only on button click.
 }
-
-
