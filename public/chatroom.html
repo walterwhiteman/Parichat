@@ -6,6 +6,81 @@
   <title>Parichat - Chatroom</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://unpkg.com/@figma-plugin/icon/v1.1.0/index.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f4ff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #007bff;
+      color: white;
+      padding: 0.75rem 1rem;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 10;
+    }
+    .header-icons button {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      margin-left: 0.75rem;
+      cursor: pointer;
+    }
+    .chat-box {
+      flex-grow: 1;
+      padding: 4.5rem 1rem 3.5rem;
+      overflow-y: auto;
+    }
+    .chat-input-area {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 0.5rem;
+    }
+    #msgInput {
+      flex-grow: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 1rem;
+      margin-right: 0.5rem;
+      font-size: 1rem;
+    }
+    #sendBtn {
+      background: #007bff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    #sendBtn i {
+      font-size: 1.1rem;
+    }
+    .message {
+      margin-bottom: 1rem;
+    }
+    .message .meta {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
+  </style>
 </head>
 <body>
   <div class="chat-header">
