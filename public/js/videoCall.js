@@ -173,6 +173,8 @@ async function getLocalStream() {
 async function initializePeer() {
     if (!peer) {
         // Configure PeerJS with STUN/TURN servers for better NAT traversal
+        // STUN servers help find public IPs. TURN servers relay traffic if direct connection fails.
+        // Public TURN servers can be unreliable or rate-limited. For production, host your own.
         peer = new Peer(userId, {
             host: '0.peerjs.com', // PeerJS Cloud host
             port: 443,
@@ -182,10 +184,10 @@ async function initializePeer() {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
-                    // You can add more STUN servers or a TURN server here if needed.
-                    // TURN servers require credentials and are often paid or self-hosted.
-                    // Example TURN server (replace with your own if you have one):
-                    // { urls: 'turn:your_turn_server.com:3478', username: 'your_username', credential: 'your_password' }
+                    // Public TURN server (numb.viagenie.ca - often used for testing)
+                    // Note: This service might not be always available or might have rate limits.
+                    // Replace with your own TURN server if you have one for better reliability.
+                    { urls: 'turn:numb.viagenie.ca', username: 'webrtc@live.com', credential: 'muazkh' }
                 ]
             }
         });
@@ -200,4 +202,4 @@ async function initializePeer() {
             // Listen for incoming call signals on my own callState node
             onValue(myCallStateRef, async (snapshot) => {
                 const callState = snapshot.val();
-                if (callState && callState.status === 'incoming' && callState.from && callState.callerPeerId && !currentCall && !incomingCallModal.classLi
+                if (callState && callState.status === 'incoming' && callState.from && callState.callerPee
