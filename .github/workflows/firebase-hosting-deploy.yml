@@ -32,5 +32,9 @@ jobs:
         firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARICHAT_ILU }}' # Your Firebase secret (corrected name based on our earlier discussion)
         projectId: parichat-ilu # Your Firebase Project ID
         channelId: live # Deploys to your live production site
-        # Explicitly tell the action where to find firebase.json, which is the repository root
-        entryPoint: '.'
+        # Explicitly tell the action where to find firebase.json relative to the repository root
+        # Using projectPath for direct specification
+        projectPath: '.'
+        # You can remove entryPoint: '.' if projectPath: '.' is used,
+        # or keep both if you suspect caching issues, but projectPath is usually more direct.
+        # entryPoint: '.' # Optional, can be removed if projectPath works.
