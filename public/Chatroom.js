@@ -1,43 +1,47 @@
 // chatroom.js
 import {
-  db,
+  getDatabase,
   ref,
   push,
   onChildAdded,
-  remove,
   set,
   onDisconnect,
-  onValue
-} from './firebase.js';
+  remove
+} from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js';
+import { app } from './firebase.js';
 
-const urlParams = new URLSearchParams(window.location.search);
-const roomId = urlParams.get('room');
-let username = urlParams.get('user');
+const db = getDatabase(app);
+const storage = getStorage(app);
 
 const chatBox = document.getElementById('chatBox');
 const msgInput = document.getElementById('msgInput');
 const sendBtn = document.getElementById('sendBtn');
 const uploadBtn = document.getElementById('uploadBtn');
-const leaveRoomBtn = document.getElementById('leaveRoomBtn');
 const startCallBtn = document.getElementById('startCallBtn');
+const leaveRoomBtn = document.getElementById('leaveRoomBtn');
 
-const roomRef = ref(db, `rooms/${roomId}`);
+const username = localStorage.getItem('username');
+const roomId = localStorage.getItem('roomId');
+
 const messagesRef = ref(db, `rooms/${roomId}/messages`);
-const presenceRef = ref(db, `rooms/${roomId}/presence/${username}`);
 
-// Handle presence
-set(presenceRef, true);
-onDisconnect(presenceRef).remove();
-
-onValue(ref(db, `rooms/${roomId}/presence`), (snapshot) => {
-  const users = snapshot.val();
-  if (users && Object.keys(users).length > 2) {
-    alert('Room is full!');
-    window.location.href = 'index.html';
+function appendMessage(data) {
+  const div = document.createElement('div');
+  div.className = 'message';
+  if (data.type === 'text') {
+    div.innerHTML = `<div>${data.content}</div><div class="meta">${data.sender} · ${new Date(data.timestamp).toLocaleTimeString()}</div>`;
+  } else if (data.type === 'image') {
+    div.innerHTML = `<img src="${data.content}" style="max-width: 70%; border-radius: 8px;" /><div class="meta">${data.sender} · ${new Date(data.timestamp).toLocaleTimeString()}</div>`;
   }
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+onChildAdded(messagesRef, (snapshot) => {
+  appendMessage(snapshot.val());
 });
 
-// Send Text Message
 sendBtn.addEventListener('click', () => {
   const text = msgInput.value.trim();
   if (text) {
@@ -51,52 +55,35 @@ sendBtn.addEventListener('click', () => {
   }
 });
 
-// Listen for messages
-onChildAdded(messagesRef, (data) => {
-  const msg = data.val();
-  const bubble = document.createElement('div');
-  bubble.className = 'message-bubble';
-  bubble.innerHTML = `
-    <p>${msg.content}</p>
-    <small>${msg.sender}<br>${new Date(msg.timestamp).toLocaleTimeString()}</small>
-  `;
-  chatBox.appendChild(bubble);
-  chatBox.scrollTop = chatBox.scrollHeight;
-});
-
-// Upload Image
-uploadBtn.addEventListener('click', () => {
+uploadBtn.addEventListener('click', async () => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.onchange = () => {
+  input.click();
+
+  input.onchange = async () => {
     const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
+    if (file) {
+      const storageRef = sRef(storage, `rooms/${roomId}/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
       push(messagesRef, {
         sender: username,
         type: 'image',
-        content: reader.result,
+        content: url,
         timestamp: Date.now(),
       });
-    };
-    reader.readAsDataURL(file);
+    }
   };
-  input.click();
 });
 
-// Leave Room
 leaveRoomBtn.addEventListener('click', () => {
-  remove(presenceRef);
-  window.location.href = 'index.html';
+  localStorage.removeItem('username');
+  localStorage.removeItem('roomId');
+  window.location.href = 'login.html';
 });
 
-// Start Call
-startCallBtn.addEventListener('click', () => {
-  window.location.href = `videocall.html?room=${roomId}&user=${username}`;
-});
-
-// Exit cleanup
 window.addEventListener('beforeunload', () => {
-  remove(presenceRef);
+  set(ref(db, `rooms/${roomId}/users/${username}`), null);
 });
+
