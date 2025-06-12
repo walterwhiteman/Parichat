@@ -1,13 +1,35 @@
-<!-- File: index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="refresh" content="0; url=login.html" />
-  <title>Redirecting to Parichat Login...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parichat - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <p>If you are not redirected automatically, <a href="login.html">click here</a>.</p>
+    <div class="login-container">
+        <div class="app-logo">
+            <span class="material-symbols-outlined">person</span> </div>
+        <h1 class="app-name">Parichat</h1>
+        <p class="app-tagline">Seamlessly Connect. Chat & Video Call. Privately.</p>
+
+        <form id="loginForm" class="login-form">
+            <div class="input-group">
+                <input type="text" id="roomCode" placeholder="Room Code" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="userName" placeholder="User Name" required>
+            </div>
+            <button type="submit" class="join-button">JOIN ROOM</button>
+        </form>
+    </div>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script type="module" src="js/firebase-init.js"></script>
+    <script type="module" src="js/auth.js"></script>
 </body>
 </html>
