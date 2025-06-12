@@ -1,7 +1,6 @@
 // public/js/videoCall.js
 
 // Import Firebase services and necessary functions
-// ADDED onDisconnect to the import list below
 import { db } from './firebase-init.js';
 import { ref, set, onValue, off, remove, get, child, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
@@ -51,9 +50,9 @@ function showAppMessage(title, message, isError = false) {
         </div>
     `;
     if (isError) {
-        modal.querySelector('h2').style.color = '#D93025';
+        modal.querySelector('h2').style.color = '#D93025'; // Red for errors
     } else {
-        modal.querySelector('h2').style.color = '#1A73E8';
+        modal.querySelector('h2').style.color = '#1A73E8'; // Blue for info
     }
     document.body.appendChild(modal);
 
@@ -145,7 +144,15 @@ async function getLocalStream() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
-        localVideo.play();
+        // Explicitly try to play, catching AbortError if it happens
+        try {
+            await localVideo.play();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error("Error playing local video:", e);
+            }
+            // else, it's an AbortError, which is often benign and can be ignored.
+        }
         makeDraggable(localVideo); // Make PIP draggable
     } catch (err) {
         console.error("Error accessing media devices:", err);
@@ -157,7 +164,6 @@ async function getLocalStream() {
 // Initialize PeerJS
 async function initializePeer() {
     if (!peer) {
-        // UPDATED: Using PeerJS Cloud host
         peer = new Peer(userId, {
             host: '0.peerjs.com', // PeerJS Cloud host
             port: 443,
@@ -168,8 +174,8 @@ async function initializePeer() {
         peer.on('open', (id) => {
             console.log('My PeerJS ID:', id);
             // Ensure my PeerJS ID is published or known to others
-            onDisconnect(ref(db, `rooms/${roomCode}/users/${userId}/peerId`)).remove(); // Using onDisconnect here
-            set(ref(db, `rooms/${roomCode}/users/${userId}/peerId`), id); // Set after onDisconnect
+            set(ref(db, `rooms/${roomCode}/users/${userId}/peerId`), id); // Set first
+            onDisconnect(ref(db, `rooms/${roomCode}/users/${userId}/peerId`)).remove(); // Then set onDisconnect
         });
 
         peer.on('call', (call) => {
@@ -220,9 +226,17 @@ acceptCallBtn.addEventListener('click', async () => {
     startCallTimer();
 
     currentCall.answer(localStream); // Answer the call with local stream
-    currentCall.on('stream', (remoteStream) => {
+    currentCall.on('stream', async (remoteStream) => {
         remoteVideo.srcObject = remoteStream;
-        remoteVideo.play();
+        // Explicitly try to play, catching AbortError if it happens
+        try {
+            await remoteVideo.play();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error("Error playing remote video:", e);
+            }
+            // else, it's an AbortError, which is often benign and can be ignored.
+        }
     });
     currentCall.on('close', () => {
         console.log('Call ended by peer.');
@@ -291,9 +305,17 @@ videoCallBtn.addEventListener('click', async () => {
     const call = peer.call(otherPeerId, localStream);
     currentCall = call;
 
-    call.on('stream', (remoteStream) => {
+    call.on('stream', async (remoteStream) => {
         remoteVideo.srcObject = remoteStream;
-        remoteVideo.play();
+        // Explicitly try to play, catching AbortError if it happens
+        try {
+            await remoteVideo.play();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error("Error playing remote video:", e);
+            }
+            // else, it's an AbortError, which is often benign and can be ignored.
+        }
         activeCallView.classList.add('active'); // Show active call view
         startCallTimer();
         document.querySelector('.app-modal')?.remove(); // Close "Calling..." modal
