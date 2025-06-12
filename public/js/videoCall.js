@@ -157,7 +157,7 @@ async function getLocalStream() {
 async function initializePeer() {
     if (!peer) {
         peer = new Peer(userId, {
-            host: 'peerjs-server.herokuapp.com', // Free public PeerJS server
+            host: '0.peerjs.com', // <--- This MUST be '0.peerjs.com'
             port: 443,
             secure: true,
             path: '/'
