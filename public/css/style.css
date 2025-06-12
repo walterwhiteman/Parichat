@@ -1,1 +1,161 @@
 
+/* public/css/style.css */
+
+/* Universal Box-sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Base Body Styles */
+body {
+    font-family: 'Roboto', sans-serif; /* Use Roboto as specified */
+    margin: 0;
+    padding: 0;
+    display: flex; /* Use flexbox for centering content */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    min-height: 100vh; /* Full viewport height */
+    background-color: #FFFFFF; /* Pure white background */
+    color: #212121; /* Primary text color */
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased; /* Smoother font rendering */
+    -moz-osx-font-smoothing: grayscale; /* Smoother font rendering */
+}
+
+/* Login Container Styling (UI1.png) */
+.login-container {
+    background-color: #FFFFFF; /* White background for the card */
+    padding: 2.5rem; /* Generous padding */
+    border-radius: 15px; /* Rounded corners for premium feel */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    text-align: center;
+    max-width: 400px; /* Max width to keep it contained */
+    width: 90%; /* Responsive width */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem; /* Space between elements */
+}
+
+/* App Logo (Person Icon) */
+.app-logo {
+    background-color: #E3F2FD; /* Light blue background for the circle */
+    border-radius: 50%; /* Make it a perfect circle */
+    width: 100px; /* Size of the circle */
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.app-logo .material-symbols-outlined {
+    font-size: 60px; /* Size of the icon */
+    color: #1A73E8; /* Primary blue for the icon */
+}
+
+/* App Name (Parichat) */
+.app-name {
+    font-size: 2.5rem; /* Larger font size */
+    font-weight: 700; /* Bold */
+    color: #1A73E8; /* Primary blue */
+    margin: 0; /* Remove default margin */
+}
+
+/* App Tagline */
+.app-tagline {
+    font-size: 1rem;
+    color: #616161; /* Secondary text color */
+    margin-top: -0.5rem; /* Pull closer to the app name */
+    margin-bottom: 1.5rem; /* Space below tagline */
+    text-align: center;
+}
+
+/* Login Form Styling */
+.login-form {
+    width: 100%; /* Take full width of container */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Space between input groups */
+}
+
+/* Input Group Styling */
+.input-group {
+    width: 100%;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 1rem 1.25rem; /* Padding inside inputs */
+    border: 1px solid #E0E0E0; /* Light gray border */
+    border-radius: 10px; /* Rounded corners for inputs */
+    font-size: 1rem;
+    color: #212121;
+    outline: none; /* Remove outline on focus */
+    transition: border-color 0.3s ease; /* Smooth transition for border */
+}
+
+.input-group input::placeholder {
+    color: #9E9E9E; /* Placeholder text color */
+}
+
+.input-group input:focus {
+    border-color: #1A73E8; /* Primary blue border on focus */
+}
+
+/* Join Button Styling */
+.join-button {
+    width: 100%;
+    padding: 1.2rem 1.5rem; /* Padding for the button */
+    background-color: #1A73E8; /* Primary blue background */
+    color: #FFFFFF; /* White text */
+    border: none; /* No border */
+    border-radius: 10px; /* Rounded corners */
+    font-size: 1.1rem;
+    font-weight: 500; /* Medium weight */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+    text-transform: uppercase; /* Uppercase text */
+    letter-spacing: 0.05em; /* Small letter spacing */
+}
+
+.join-button:hover {
+    background-color: #145CBF; /* Slightly darker blue on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+.join-button:active {
+    background-color: #0F4DAA; /* Even darker blue on click */
+    transform: translateY(0); /* Return to original position */
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 600px) {
+    .login-container {
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+
+    .app-logo {
+        width: 80px;
+        height: 80px;
+    }
+
+    .app-logo .material-symbols-outlined {
+        font-size: 50px;
+    }
+
+    .app-name {
+        font-size: 2rem;
+    }
+
+    .app-tagline {
+        font-size: 0.9rem;
+    }
+
+    .input-group input,
+    .join-button {
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+    }
+}
