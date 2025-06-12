@@ -1,0 +1,34 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main # This workflow runs when changes are pushed to the 'main' branch
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest # The type of virtual machine environment
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4 # Action to get your code onto the runner
+
+    # Optional: Uncomment these steps ONLY IF your project has a build process
+    # (e.g., if you're using React/Vue/Angular, or a build step for JS/CSS like webpack/Parcel)
+    # For a simple static site with just HTML/CSS/JS that doesn't need compilation, you can skip these.
+    # - name: Setup Node.js
+    #   uses: actions/setup-node@v4
+    #   with:
+    #     node-version: '18' # Use a Node.js version compatible with your project
+    # - name: Install Dependencies
+    #   run: npm ci # 'npm ci' is preferred over 'npm install' in CI environments
+    # - name: Build Project
+    #   run: npm run build # Replace 'npm run build' with your project's actual build command
+
+    - name: Deploy to Firebase
+      uses: FirebaseExtended/action-hosting-deploy@v0 # The official Firebase Hosting deployment action
+      with:
+        repoToken: '${{ secrets.GITHUB_TOKEN }}' # Provided by GitHub for general repo access
+        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' # Your Firebase secret from Step 2
+        projectId: parichat-ilu # **IMPORTANT: Replace with your actual Firebase Project ID!**
+        channelId: live # Deploys to your live production site
