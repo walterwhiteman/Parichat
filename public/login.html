@@ -1,0 +1,77 @@
+<!-- File: login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parichat Login</title>
+  <link href="https://unpkg.com/@figma-plugin/icon/v1.1.0/index.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #f4f9ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #007BFF;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      width: 100%;
+      margin-top: 2rem;
+      padding: 0.75rem;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2><i class="figicon figicon-chat"></i> Parichat</h2>
+    <form id="loginForm">
+      <label for="roomId">Room ID</label>
+      <input type="text" id="roomId" required />
+
+      <label for="username">Username</label>
+      <input type="text" id="username" required />
+
+      <button type="submit"><i class="figicon figicon-login"></i> Enter Room</button>
+    </form>
+  </div>
+
+  <script type="module" src="./login.js"></script>
+</body>
+</html>
