@@ -29,6 +29,8 @@ jobs:
       uses: FirebaseExtended/action-hosting-deploy@v0 # The official Firebase Hosting deployment action
       with:
         repoToken: '${{ secrets.GITHUB_TOKEN }}' # Provided by GitHub for general repo access
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' # Your Firebase secret from Step 2
-        projectId: parichat-ilu # **IMPORTANT: Replace with your actual Firebase Project ID!**
+        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARICHAT_ILU }}' # Your Firebase secret (corrected name based on our earlier discussion)
+        projectId: parichat-ilu # Your Firebase Project ID
         channelId: live # Deploys to your live production site
+        # Explicitly tell the action where to find firebase.json, which is the repository root
+        entryPoint: '.'
